@@ -1,7 +1,7 @@
 f <- function(x, y){
   a <- (1-x)^2
-  b <- y-x^2
-  return(a + 100*b^2)
+  b <- (y-x^2)^2
+  return(a + 100*b)
 }
 
 fxy <- function(x, y){
