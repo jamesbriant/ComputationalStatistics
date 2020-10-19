@@ -5,7 +5,7 @@ loglike <- function(alpha, beta, x){
   # x should be a vector!!
   n <- length(x)
   
-  a <- n*log(beta/pi)
+  a <- n*log(beta)
   b <- sum(log(beta^2 + (x-alpha)^2))
   
   return(a-b)
@@ -15,7 +15,7 @@ loglikeFirstDerivative <- function(alpha, beta, x){
   # x should be a vector!
   n <- length(x)
   
-  a <- 2*sum(x-alpha)
+  a <- 2*sum(x)-2*n*alpha
   b <- n*(beta^2) + sum((x-alpha)^2)
   
   return(a/b)
@@ -36,14 +36,19 @@ loglikeSecondDerivative <- function(alpha, beta, x){
   return(numerator/denominator)
 }
 
-K <- 700
+K <- 500
 
 data <- c(-4.2, -2.85, -2.3, -1.02, 0.7, -0.98, 2.72, 3.5)
 beta <- 0.1
-alpha <- seq(from=-5, to=3, length.out=K)
+alpha <- seq(from=-5, to=2, length.out=K)
 
 plot(alpha, mapply(loglike, alpha, beta, rep(list(data), K)))
+abline(v=-1, col="green")
 abline(v=-0.554, col="red")
+
+plot(alpha, mapply(loglikeFirstDerivative, alpha, beta, rep(list(data), K)))
+abline(v=-1)
+abline(h=0)
 
 
 #############-------------------------------------------------------
@@ -51,15 +56,15 @@ abline(v=-0.554, col="red")
 
 # This method probably doesn't work well if there are many local optima.
 
-x1 <- -1.5
-x3 <- 0
+x1 <- -1.3
+x3 <- -0.6
 
 counter <- 0
 
 while(x3-x1 > 0.001){
   x2 <- 0.5*(x1+x3)
   
-  if(loglikeFirstDerivative(x2, 0.1, data) > 0){
+  if(loglikeFirstDerivative(x2, beta, data) > 0){
     x1 <- x2
   } else {
     x3 <- x2
