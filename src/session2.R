@@ -13,27 +13,20 @@ loglike <- function(alpha, beta, x){
 
 loglikeFirstDerivative <- function(alpha, beta, x){
   # x should be a vector!
-  n <- length(x)
   
-  a <- 2*sum(x)-2*n*alpha
-  b <- n*(beta^2) + sum((x-alpha)^2)
+  a <- 2*(x-alpha)
+  b <- beta^2 + (x-alpha)^2
   
-  return(a/b)
+  return(sum(a/b))
 }
 
 loglikeSecondDerivative <- function(alpha, beta, x){
   # x should be a vector!
-  n <- length(x)
   
-  b2 <- beta^2
-  b4 <- b2^2
-  a2 <- sum((x-alpha)^2)
-  a4 <- sum((x-alpha)^4)
+  a <- (x-alpha)^2
+  b <- beta^2 + a
   
-  numerator <- -2*n*b2 + 2*a2
-  denominator <- n*b4 + 2*b2*a2 + a4
-  
-  return(numerator/denominator)
+  return(-2*sum(1/b) + 4*sum(a/(b^2)))
 }
 
 K <- 500
@@ -44,12 +37,10 @@ alpha <- seq(from=-5, to=2, length.out=K)
 
 plot(alpha, mapply(loglike, alpha, beta, rep(list(data), K)), main="likelihood function")
 abline(v=-1, col="green")
-abline(v=-0.554, col="red")
 
 plot(alpha, mapply(loglikeFirstDerivative, alpha, beta, rep(list(data), K)), main="df/d(alpha)")
 abline(v=-1, col="green")
 abline(h=0, col="blue")
-abline(v=-0.554, col="red")
 
 
 #############-------------------------------------------------------
@@ -57,8 +48,8 @@ abline(v=-0.554, col="red")
 
 # This method probably doesn't work well if there are many local optima.
 
-x1 <- -1.3
-x3 <- -0.6
+x1 <- -2
+x3 <- 0
 
 counter <- 0
 
