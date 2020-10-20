@@ -42,13 +42,14 @@ data <- c(-4.2, -2.85, -2.3, -1.02, 0.7, -0.98, 2.72, 3.5)
 beta <- 0.1
 alpha <- seq(from=-5, to=2, length.out=K)
 
-plot(alpha, mapply(loglike, alpha, beta, rep(list(data), K)))
+plot(alpha, mapply(loglike, alpha, beta, rep(list(data), K)), main="likelihood function")
 abline(v=-1, col="green")
 abline(v=-0.554, col="red")
 
-plot(alpha, mapply(loglikeFirstDerivative, alpha, beta, rep(list(data), K)))
-abline(v=-1)
-abline(h=0)
+plot(alpha, mapply(loglikeFirstDerivative, alpha, beta, rep(list(data), K)), main="df/d(alpha)")
+abline(v=-1, col="green")
+abline(h=0, col="blue")
+abline(v=-0.554, col="red")
 
 
 #############-------------------------------------------------------
@@ -123,17 +124,17 @@ print(paste("(", x1, ",", x3, ") in", counter, "iterations."))
 
 N <- 20
 
-x <- numeric(N+1)
-x[1] <- -0.5
+alpha_estimates <- numeric(N+1)
+alpha_estimates[1] <- -0.5
 
 for(i in 1:N){
-  a <- loglikeFirstDerivative(x[i], 0.1, data)
-  b <- loglikeSecondDerivative(x[i], 0.1, data)
+  a <- loglikeFirstDerivative(alpha_estimates[i], 0.1, data)
+  b <- loglikeSecondDerivative(alpha_estimates[i], 0.1, data)
   
-  x[i+1] <- x[i] - a/b
+  alpha_estimates[i+1] <- alpha_estimates[i] - a/b
 }
 
-print(paste("The best estimate for x is", x[N+1], "after", N, "iterations."))
+print(paste("The best estimate for alpha is", alpha_estimates[N+1], "after", N, "iterations."))
 
 
 
