@@ -90,7 +90,7 @@ x3 <- 1
 
 counter <- 0
 
-while(x3-x2 > 0.001){
+while(x3-x1 > 0.001){
   GR <- goldenRatioMeanSearch(x1, x3)
   x2 <- GR$x2
   x4 <- GR$x4
