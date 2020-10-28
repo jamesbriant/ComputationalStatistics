@@ -14,22 +14,20 @@ loglike <- function(alpha, beta, x){
 
 loglikeFirstDerivativeAlpha <- function(alpha, beta, x){
   # x should be a vector!
-  n <- length(x)
   
-  a <- 2*sum(x)-2*n*alpha
-  b <- n*(beta^2) + sum((x-alpha)^2)
+  a <- 2*(x-alpha)
+  b <- beta^2 + (x-alpha)^2
   
-  return(a/b)
+  return(sum(a/b))
 }
 
 loglikeFirstDerivativeBeta <- function(alpha, beta, x){
   # x should be a vector!
   n <- length(x)
   
-  a <- sum((x-alpha)^2) - n*beta^2
-  b <- n*(beta^3) + sum((x-alpha)^2)
+  a <- (x-alpha)^2
   
-  return(a/b)
+  return(sum((a-beta^2)/(beta^3 + beta*a)))
 }
 
 K <- 350
@@ -98,7 +96,7 @@ while(abs(loglike(alpha_estimates[i], beta_estimates[i], data) - loglike(alpha_e
 #########------------------------------------------------------------------
 # Question 4
 
-contour(alpha, beta, z)
+contour(alpha_estimates, beta_estiamtes, z)
 lines(mapply(loglike, alpha_estimates, beta_estimates, rep(list(data), length(alpha_estimates))))
 
 
