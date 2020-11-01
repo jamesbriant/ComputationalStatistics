@@ -96,7 +96,7 @@ while(abs(loglike(alpha_estimates[i], beta_estimates[i], data) - loglike(alpha_e
 #########------------------------------------------------------------------
 # Question 4
 
-contour(alpha_estimates, beta_estiamtes, z)
+contour(alpha_estimates, beta_estimates, z)
 lines(mapply(loglike, alpha_estimates, beta_estimates, rep(list(data), length(alpha_estimates))))
 
 
