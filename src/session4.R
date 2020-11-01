@@ -5,7 +5,7 @@ z<-X$z   ##### Indicator
 ################
 # a)
 
-hist(x)
+hist(x, freq=FALSE)
 
 ###############
 # b)
@@ -44,12 +44,35 @@ while(abs(p[i]-p[i-1]) > tol && abs(mu0[i] - mu0[i-1]) > tol && abs(mu1[i] - mu1
   }
 }
 
+############
+# c)
 
+p.hat <- p[i]
+mu0.hat <- mu0[i]
+mu1.hat <- mu1[i]
 
+x.plot <- seq(0, 10, length=100)
 
+f <- (1-p.hat)*dnorm(x.plot, mu0.hat, 1) + p.hat*dnorm(x.plot, mu1.hat, 1)
+lines(x.plot, f)
+points(x.plot, f)
 
+##########
+# d)
 
+classify <- numeric(100)
+classify[w[[i]] < 0.5] <- 1
 
+#########
+# e)
+
+correctCounter <- 100 - sum(z - classify)
+correctCounter
+
+###########
+# f)
+
+points(x[12], (1-p.hat)*dnorm(x[12], mu0.hat, 1) + p.hat*dnorm(x[12], mu1.hat, 1), col="red")
 
 
 
