@@ -1,0 +1,463 @@
+---
+title: "CST Coursework"
+author: "James Briant"
+date: "15/12/2020"
+output: 
+  pdf_document:
+    fig_caption: true
+    fig_width: 5
+    fig_height: 3.5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1
+
+## 1.a)
+
+This section contains only code. See the .R document for the code.
+
+```{r, include=FALSE}
+y <- scan("Q1Data.txt")
+t <- length(y) # = 50
+
+mu0 <- 20 # given in question
+
+f <- function(data, mu){
+  # returns the square error
+  return(sum((data - mu)^2))
+}
+
+LogisticMap <- function(x, r, K){
+  # Calculates the next time step using the logistic map
+  return(r*x*(1-x/K))
+}
+
+CalculateMu <- function(r, K, mu0, maxT){
+  # Runs the dynamic model for given r, K and mu0 up to time maxT
+  # Returns a vector of mu values for times {1, ..., maxT}
+  mu <- numeric(maxT)
+  
+  mu[1] <- LogisticMap(mu0, r, K)
+  for(i in 2:maxT){
+    mu[i] <- LogisticMap(mu[i-1], r, K)  
+  }
+  
+  return(mu)
+}
+
+GoldenRatioPoints <- function(x1, x3){
+  # Calculate the optimum points for the Golden Ratio Mean Search Algorithm
+  goldenRatio <- (1+sqrt(5))/2
+  r <- 1/goldenRatio
+  
+  x2 <- r*x1 + (1-r)*x3
+  x4 <- (1-r)*x1 + r*x3
+  
+  return(list("x2"=x2, "x4"=x4))
+}
+
+MinimiseF.fix.K <- function(data, mu0, r0, r1, K){
+  # Run the Golden Ratio Search algorithm searching over r with a fixed K
+  # returns a range in which the minimum exists
+  
+  x1 <- r0
+  x3 <- r1
+  
+  t <- length(data) # number of time steps
+  
+  # The golden ratio algorithm
+  while(abs(x3-x1) > 0.001){
+    GR <- GoldenRatioPoints(x1, x3)
+    x2 <- GR$x2
+    x4 <- GR$x4
+    
+    # f is the objective function
+    fx2 <- f(data, CalculateMu(x2, K, mu0, t))
+    fx4 <- f(data, CalculateMu(x4, K, mu0, t))
+    
+    if(fx4 < fx2){
+      x1 <- x2
+    } else{
+      x3 <- x4
+    }
+  }
+  
+  return(c(x1, x3))
+}
+
+MinimiseF.fix.r <- function(data, mu0, r, K0, K1){
+  # Run the Golden Ratio Search algorithm searching over K with a fixed r
+  # returns a range in which the minimum exists
+  
+  x1 <- K0
+  x3 <- K1
+  
+  t <- length(data) # number of time steps
+  
+  # The golden ratio algorithm
+  while(abs(x3-x1) > 0.001){
+    GR <- GoldenRatioPoints(x1, x3)
+    x2 <- GR$x2
+    x4 <- GR$x4
+    
+    # f is the objective function
+    fx2 <- f(data, CalculateMu(r, x2, mu0, t))
+    fx4 <- f(data, CalculateMu(r, x4, mu0, t))
+    
+    if(fx4 < fx2){
+      x1 <- x2
+    } else{
+      x3 <- x4
+    }
+  }
+  
+  return(c(x1, x3))
+}
+```
+
+## 1.b)
+
+### Exploratory Analysis
+
+The model uses a variant of the recursive logistic map, but we can look to the logistic map for an indication of the behaviour of our dynamic system. The standard logistic map is defined as $x_{t+1} = rx_t(1-x_t)$. The properties of this mapping depend on the value of $r$. If $r \in (0,1)$, the sequence tends to 0. If $r \in (1, 3)$, the sequence converges to a single value. If $r > 3$, the sequence starts to become chaotic. By inspecting the distribution of the data, we can get a rough indication of where $r$ may lie.
+
+```{r, echo=FALSE, fig.cap="\\label{fig:Trace}Trace of Observations"}
+plot(1:t, y, main="Trace of Observations", type="l", xlab="time", ylab="Observation")
+abline(h=mean(y), col="red")
+```
+
+Figure \ref{fig:Trace} shows the system immediately converges from $\mu_0$ to some constant. The red line is the sample mean which is a likely candidate for this system to converge to. This convergence indicates the distribution of the observation should be single model (around the mean) with variance 1. A histogram will confirm this. 
+
+```{r, echo=FALSE, fig.cap="\\label{fig:HistogramOfData}The histogram represents the distribution of the observations, the red curve is a normal distribution with mean equal to the mean of the observations and variance equal to 1."}
+hist(y, freq=FALSE, main="Histogram of the Data")
+x <- seq(22, 28, length=200)
+lines(x, dnorm(x, mean(y), 1), col="red")
+#legend("topleft",
+#       legend=c("data", "N(mean(data), 1)"),
+#       col=c("black", "red"),
+#       lty=c(1, 1))
+```
+
+The model $\mu_{t+1} = r\mu_t(1-\frac{\mu_t}{K})$ is deterministic if $r$ and $K$ are known exactly. But the observations made at each time step are subject to Gaussian noise, $y_t = \mu_t + \epsilon$ where $\epsilon \sim N(0, 1)$. It is this noise term that gives rise the distribution highlighted above.
+
+Using this information, we can assume that it is likely that $r \in (1,3)$.
+
+We can also get an approximation for $r$ (and $K$) by using 2 sets of consecutive data points, fitting them to the model dynamics and solving the simultaneous equations. This works because the the Gaussian noise has zero mean:
+
+$$\mathbb E[y_t] = \mu_t$$
+The following page takes $\{y_1, y_2, y_3, y_4\}$, chosen arbitrarily, and solves the equations to find $r \approx 1.96$ and $K \approx 49.4$. These values help indicate where in $\mathbb R$ we should be searching for $r$ and $K$. 
+
+\newpage
+
+### Asymptotic Behaviour
+
+Figure \ref{fig:Trace} shows the system quickly converges. This allows for us to assume that $\mu_{t+1} = \mu_t = x$ for large enough $t$. A good estimate for $x$ is the sample mean, $\bar y = \frac{1}{50}\sum_{i=1}^{50}y_i$.
+
+
+\begin{align*} 
+x &= rx(1-\frac{x}{K}) \\
+&= rx\Big(\frac{K-x}{K}\Big) \\
+& \\
+\implies 1 &= r\Big(\frac{K-x}{K}\Big) \\
+&\approx r\Big(\frac{K-\bar y}{K}\Big)
+\end{align*}
+
+
+This indicates there is a very close relationship between $r$ and $K$ and that if we fix one variable, we can calculate the other. This relationship is only approximate due to the random nature of the observations, but will help significantly with finding where the golden ratio search algorithm should be started. 
+
+By ranging over different values for $r$, we can calculate a value for $K$ and use these values to fit to the model.
+
+```{r, echo=FALSE, fig.cap="\\label{fig:KAgainstR}K against r according to the relationship outlined in the asymptotic equations. The red line indicates a vertical asymptote at r=1."}
+y.bar <- mean(y)
+r <- seq(-3, 5, length=400)
+K <- numeric(length(r))
+z <- numeric(length(r))
+for(i in 1:length(r)){
+  K[i] <- -y.bar*r[i]/(1-r[i])
+  z[i]<- f(y, CalculateMu(r[i], K[i], mu0, t))
+}
+
+plot(r, K, type="l", main="K Against r")
+abline(v=1, col="red")
+```
+
+```{r, echo=FALSE, fig.cap="\\label{fig:FAgainstR}Least Squares Objective against r"}
+plot(r, z, type="l", main="Least Squares Objective against r", ylab="f(r, K)")
+```
+
+Figure \ref{fig:FAgainstR} shows the least squares objective function is only defined for some values of $r$. $f(r, K)$ also becomes chaotic around $r=-2$ and around $r=4$. As previously suggested, figure \ref{fig:FAgainstR} suggests the least squares minimum lies somewhere between $r=1.1$ and $r=3$. This also agrees with the simultaneous equations approach. We can 'zoom in' on a smaller range around which the optimum $r$ lies.
+
+```{r, echo=FALSE, fig.cap="\\label{fig:FAgainstRZoom}Least Squares Objective against r"}
+r <- seq(1.1, 3, length=400)
+K <- numeric(length(r))
+z <- numeric(length(r))
+for(i in 1:length(r)){
+  K[i] <- -y.bar*r[i]/(1-r[i])
+  z[i]<- f(y, CalculateMu(r[i], K[i], mu0, t))
+}
+plot(r, z, type="l", main="Least Squares Objective against r", ylab="f(r, K)")
+```
+
+It is important to remember this relationship is only approximate, so the least squares estimate may not lie exactly around $r=2.0$, with $K$ then determined by $r$, as implied by figure \ref{fig:FAgainstRZoom}.
+
+## Golden Ratio Search Algorithm
+
+Using the simultaneous equations approximation as a guide, I choose to start the one-dimensional search algorithm at $r=1.96$ and $K=49.4$ as suggested by the simultaneous equations approach. I allow the algorithm to search along $r \in (1.1, 3.0)$ for a fixed $K$ and along $K \in (25, 300)$ for a fixed $r$. I take the midpoint of the golden ratio's interval solution as the point estimate for both variables. I also limit the one-dimensional search algorithm to 1000 iterations and I set a stopping criteria on the relative difference between 2 consecutive estimates for K. The code for this algorithm can be found in the .R file. 
+
+```{r, include=FALSE}
+FindMidpoint <- function(x, y){
+  return((x+y)/2)
+}
+
+# intervals for where r and K lie
+r <- c(1.1, 3)
+K <- c(25, 300)
+
+# best first guess of r and K, estimates come from 
+r.hat <- 1.96
+K.hat <- 49.4
+
+# Since K is large, changes in K are easier to measure.
+# Hence use K to stop algorithm when K converges (stops changing).
+K.previous <- 0
+
+# implement the one-dimensional search algorithm
+counter <- 0
+while(abs(K.previous - K.hat) > 0.000000001 && counter < 1000){
+  counter <- counter + 1
+  
+  r.range <- MinimiseF.fix.K(y, mu0, r[1], r[2], K.hat) # search over all possible r
+  r.hat <- FindMidpoint(r.range[1], r.range[2])
+  
+  K.range <- MinimiseF.fix.r(y, mu0, r.hat, K[1], K[2]) # search over all possible K
+  K.previous <- K.hat
+  K.hat <- FindMidpoint(K.range[1], K.range[2])
+}
+r.hat
+K.hat
+f(y, CalculateMu(r.hat, K.hat, mu0, t))
+K.hat * (r.hat-1)/r.hat
+```
+
+The algorithm finds that $\hat r =$ `r r.hat` and that $\hat K =$ `r K.hat`. The objective function evaluated at $\hat r$ and $\hat K$ equates to `r f(y, CalculateMu(r.hat, K.hat, mu0, t))`. These estimates seem sensible and can be further justified by noting the following
+
+\begin{align*}
+\hat K\Big(\frac{\hat r -1}{\hat r}\Big) &= 24.94263 \\
+&\approx \bar y = 24.94246
+\end{align*}
+
+reinforcing the asymptotic behaviour argument discussed earlier.
+
+We can justify this estimate is a global minimum by considering figures \ref{fig:persp} and \ref{fig:contour}. Figure \ref{fig:persp} shows the U shape in which the minimum lies. Figure \ref{fig:contour} indicates approximately where the best solution should lie assuming the asymptotic behaviour holds true.
+
+```{r, echo=FALSE, fig.cap="\\label{fig:persp}3D plot of objection function as a function of r and K."}
+r <- seq(1.8, 2.2, length=40)
+K <- seq(40, 60, length=40)
+z <- matrix(0, nrow=length(r), ncol=length(K))
+for(i in 1:length(r)){
+  for(j in 1:length(K)){
+    z[i, j] <- f(y, CalculateMu(r[i], K[j], mu0, t))
+  }
+}
+
+persp(K, r, t(z), zlab="f")
+```
+
+```{r, echo=FALSE, fig.cap="\\label{fig:contour}Black lines indicate the contour of the objective function. Red line is the plane where r and K follow the analytical asymptotic behaviour. Blue circle is the solution found by the algorithm."}
+contour(r, K, z, xlab="r", ylab="K")
+lines(r, K, col="red")
+points(r.hat, K.hat, col="blue")
+```
+
+
+
+\newpage
+
+# Question 2
+
+## 2.a)
+
+See the scanned page below.
+
+\newpage
+
+## 2.b)
+
+```{r, include=FALSE}
+beta.hat <- function(gamma){
+  # Find the optimum beta given gamma
+  return((gamma + sqrt(gamma^2 + 12))/2)
+}
+
+M <- function(gamma, k){
+  # Return M as a function of gamma
+  # k is the normalising constant
+  beta <- beta.hat(gamma)
+  
+  a <- 2/(beta^3*k)
+  b <- (beta-gamma)^2/2
+  
+  return(a*exp(b))
+}
+```
+
+The code for this question is available on the .R file. $M(2)=$ `r M(2, 0.1068461)` and  $M(-5)=$ `r M(-5, 17488148)`.
+
+## 2.c)
+
+```{r, include=FALSE}
+y.hat <- function(gamma){
+  a <- -gamma + sqrt(gamma^2 + 8)
+  return(a/2)
+}
+
+H <- function(gamma){
+  a <- y.hat(gamma)^2
+  return((a + 2)/a)
+}
+
+x.hat <- function(gamma, lambda){
+  A <- ((H(gamma)/lambda)-1)/2
+  B <- -gamma - H(gamma)/lambda*y.hat(gamma)
+  
+  return((-B - sqrt(B^2 - 16*A))/(4*A))
+}
+
+M1 <- function(gamma, lambda){
+  # Return M1 as a function of gamma
+  x <- x.hat(gamma, lambda)
+  H.gamma <- H(gamma)/lambda
+  
+  a <- x^2*(H.gamma-1)/2
+  b <- -x*(gamma + H.gamma*y.hat(gamma))
+  c <- H.gamma * y.hat(gamma)^2/2
+  
+  return(x^2 * exp(a + b + c))
+}
+```
+
+See the scanned pages below.
+
+\newpage
+
+To generate a sample from $f$ using the rejection algorithm for a given $\gamma$, we have the following formulation
+
+1. Sample a candidate $Y \sim g = N(\bar y, \frac{\lambda}{H})$
+2. Sample $U \sim \text{Uniform}(0,1)$
+3. If $U < \frac{f_1(Y; \gamma)}{M_1(\gamma)g_1(Y)}$, accept Y as a sample from $f$. Otherwise, return to step 1.
+
+## 2.d)
+
+```{r, echo=FALSE, fig.cap="\\label{fig:fapprox1}f approximated by a Gaussian distribution. Black line follows f(x, gamma=2), normalised. red line follows N(mu, 5/H), proposal distribution"}
+f1 <- function(x, gamma){
+  # function f up to proportionality
+  x2 <- x^2
+  a <- x2/2 + gamma*x
+  return(x2*exp(-a))
+}
+
+x <- seq(0, 4, length=500)
+plot(x, f1(x,2)/0.1068461, type="l", main="gamma = 2", ylab="density")
+lines(x, dnorm(x, y.hat(2), 5/H(2)), col="red")
+#legend("topright",
+#       legend=c("f(x, 2), normalised",
+#                "N(mu, lambda/H), proposal"),
+#       col=c("black", "red"),
+#       lty=c(1, 1))
+```
+
+```{r, echo=FALSE, fig.cap="\\label{fig:fapprox2}f approximated by a Gaussian distribution. Black line follows f(x, gamma=-5), normalised. red line follows N(mu, 1.5/H), proposal distribution"}
+x <- seq(0, 11, length=500)
+plot(x, f1(x,-5)/17488148, type="l", main="gamma = -5", ylab="density")
+lines(x, dnorm(x, y.hat(-5), 1.5/H(-5)), col="red")
+#legend("topright",
+#       legend=c("f(x, -5), normalised",
+#                "N(mu, lambda/H), proposal"),
+#       col=c("black", "red"),
+#       lty=c(1, 1))
+```
+
+See figures \ref{fig:fapprox1} and \ref{fig:fapprox2}.
+
+## 2.e)
+
+Using the rejection algorithm to generate 100000 samples from $f$ we can calculate how many attempts the algorithm makes before a candidate is accepted. First, check the algorithm works comparing the true and sampled distributions. This is shown in figure \ref{fig:RejectionCheck}.
+
+```{r, echo=FALSE, fig.cap="\\label{fig:RejectionCheck}The histogram represents the rejection sample distribution of f. The red line is the exact distribution of f(x; gamma)"}
+N <- 100000 # number of samples to be drawn
+
+mu <- y.hat(-5)
+sigma2 <- 1.5/H(-5)
+
+X <- numeric(N)
+tries <- numeric(N)
+
+i <- 1
+j <- 0
+while(i <= N){
+  j <- j + 1  
+  Y <- rnorm(1, mu, sqrt(sigma2))
+  #while(Y < 0){
+  #  Y <- rnorm(1, mu, sigma2)
+  #}
+  U <- runif(1, 0, 1)
+  
+  if(U * M1(-5, 1.5) * dnorm(Y, mu, sqrt(sigma2)) * sqrt(2*pi*sigma2) < f1(Y, -5)){
+    X[i] <- Y
+    tries[i] <- j
+    
+    i <- i + 1
+    j <- 0
+  }
+}
+
+hist(X, freq=FALSE, breaks=seq(min(X), max(X), length=30), main="Distribution of f")
+lines(seq(min(X), max(X), length=400), f1(seq(min(X), max(X), length=400), -5)/17488148, col="red")
+#legend("topright",
+#       legend=c("rejection samples",
+#                "f(x, -5), normalised"),
+#       col=c("black", "red"),
+#       lty=c(1, 1))
+```
+
+Figure \ref{fig:HistTries} shows a geometric distribution with mean `r mean(tries)`. This distribution represents the number of attempts the algorithm makes before a candidate is accepted as a sample from $f$.
+
+```{r, echo=FALSE, fig.cap="\\label{fig:HistTries}Histrogram of Number of Rejection Algorithm Attempts"}
+hist(tries, freq=FALSE, main="Histrogram of Number of Rejection Algorithm Attemps")
+```
+
+## 2.f)
+
+The 'fully normalised' bound, denoted $M_2$, is related to $M_1$ via the following:
+
+\begin{align*}
+M_2 &= \frac{\sqrt{2 \pi \sigma^2}}{k(\gamma)}M_1 \\
+\implies k(\gamma) &= \frac{\sqrt{2 \pi \frac{\lambda}{H}}}{M_2}M_1
+\end{align*}
+
+We can use the mean of the rejection sampling attempts as an estimate for $M_2$. This allows us to estimate the normalising constant $k(\gamma)$. For $\gamma = -5$ and $\lambda = 1.5$, we have the following:
+
+\begin{align*}
+k(-5) &= \frac{\sqrt{2 \pi \frac{\lambda}{H}}}{M_2}M_1 \\
+&\approx \frac{\sqrt{2 \pi \frac{1.5}{H(-5)}}}{`r mean(tries)`}`r M1(-5, 1.5)` \\
+&= `r sqrt(2*pi*sigma2)*M1(-5, 1.5)/mean(tries)`
+\end{align*}
+
+## 2.g)
+
+For the normal distribution we have already seen, in question 2d, that $\gamma = -5$ is much better approximated by a normal distribution than $\gamma = 2$. This can be seen from how well the envelope function approximates the $f$. However, even this requires the introduction of a new parameter, suggesting the normal distribution is a poor choice.
+
+The gamma distribution, with shape parameter greater than 1, approximates $f$ well for approximately $\gamma=2$. This has been seen previously in the class problem sheets.
+
+
+
+
+
+
+
+
+
+
