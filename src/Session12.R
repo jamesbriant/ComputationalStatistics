@@ -74,6 +74,7 @@ plot(theta, abs(posterior(theta)*theta), type="l")
 # Question 2c)
 
 lines(theta, dnorm(theta, -0.7, 0.5), col="red")
+abline(v=-0.7, col="red")
 
 ######################
 # Question 2d)
@@ -83,14 +84,18 @@ h <- function(theta){
 }
 
 f <- function(theta){
-  return(posterior(theta))
+  data <- c(0.02, -0.18, -1.37, -0.60, 0.29)
+  sum.data.squared <- sum(data^2)
+  a <- sum.data.squared - 2*theta*sum(data) + length(data)*theta^2
+  
+  return(exp(-0.5*a)/(1 + theta^2))
 }
 
 g <- function(theta){
   return(dnorm(theta, -0.7, sd=0.5))
 }
 
-theta <- rnorm(1000, -0.7, 0.5)
+theta <- rnorm(1000, -0.7, sd=0.5)
 weights <- f(theta)/g(theta)
 estimate <- mean(h(theta)*weights)
 estimate
