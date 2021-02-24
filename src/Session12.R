@@ -97,5 +97,5 @@ g <- function(theta){
 
 theta <- rnorm(1000, -0.7, sd=0.5)
 weights <- f(theta)/g(theta)
-estimate <- mean(h(theta)*weights)
+estimate <- mean(h(theta)*weights)/mean(weights)
 estimate
