@@ -35,12 +35,12 @@ SampleFromMixtureModel <- function(n, mu0=0, mu1=3, p=0.3){
 ################################################################################
 # PART 1 - Exploratory Plots
 
-# Plot 1
+# Figure 1
 x <- seq(-5, 8, length=500)
 plot(x, MixtureDensity(x), type="l", main="Mixture Density", ylab="Density")
 abline(v=0, col="red")
 
-# Plot 2
+# Figure 2
 data <- SampleFromMixtureModel(100)
 hist(data, freq=FALSE, ylim=c(0,0.3))
 leg <- c()
@@ -62,7 +62,7 @@ abline(v=0, col=2, lty=2)
 theta.true <- MixtureDensity(0)
 
 # value of h to explore
-h <- c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8) # c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
+h <- c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8)
 
 # vector for counting the successful CIs
 h.counts <- numeric(length(h))
@@ -113,11 +113,11 @@ data.frame(h, h.counts/N)
 
 
 
-##############################################################
+################################################################################
 # PART 3 - Generating the CIs 2
 
 # Now focus on more refined area
-h2 <- c(0.6, 0.61, 0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7) # c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
+h2 <- c(0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7, 0.71)
 h2.counts <- numeric(length(h2))
 
 N <- 1000 # number of CI to generate
@@ -157,6 +157,6 @@ h2.counts <- foreach(i = 1:length(h2), .combine='c', .export = ls(globalenv())) 
 }
 parallel::stopCluster(cl)
 
-
+# print the probability approximation of the coverage
 data.frame(h2, h2.counts/N)
 
