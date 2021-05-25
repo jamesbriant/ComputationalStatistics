@@ -1,7 +1,11 @@
-# UNLESS YOU HAVE AT LEAST 6 FAST CPU CORES I DON'T RECOMMEND RUNNING PARTS 2 OR 3, 
-# IT'S KINDA SLOW.
+# UNLESS YOU HAVE AT LEAST 6 FAST CPU CORES...
+# I DO NOT RECOMMEND RUNNING PARTS 2 OR 3, THEY ARE SLOW
 
-# This script 
+# Parts 1,2,3 for Q1
+# Parts 4 onwards for Q2
+
+################################################################################
+# PART 0
 
 # libraries required for parallel computations
 library(foreach)
@@ -68,7 +72,7 @@ h <- c(0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.
 h.counts <- numeric(length(h))
 
 N <- 1000 # number of CI to generate
-B <- 1000 # try for 1000, 3000, 5000, 10000? # Number of bootstrap estimates per CI
+B <- 1000 # Number of bootstrap estimates per CI
 
 # set up the parallel environments
 core.count <- detectCores()
@@ -121,7 +125,7 @@ h2 <- c(0.62, 0.63, 0.64, 0.65, 0.66, 0.67, 0.68, 0.69, 0.7, 0.71)
 h2.counts <- numeric(length(h2))
 
 N <- 1000 # number of CI to generate
-B <- 1000 # try for 1000, 3000, 5000, 10000? # Number of bootstrap estimates per CI
+B <- 1000 # Number of bootstrap estimates per CI
 
 core.count <- detectCores()
 cl <- parallel::makeCluster(core.count-1)
@@ -160,3 +164,7 @@ parallel::stopCluster(cl)
 # print the probability approximation of the coverage
 data.frame(h2, h2.counts/N)
 
+
+
+################################################################################
+# PART 4
